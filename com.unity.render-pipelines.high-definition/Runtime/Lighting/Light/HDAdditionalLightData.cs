@@ -1218,6 +1218,25 @@ namespace UnityEngine.Rendering.HighDefinition
         BoolScalableSettingValue m_UseContactShadow = new BoolScalableSettingValue { useOverride = true };
         public BoolScalableSettingValue useContactShadow => m_UseContactShadow;
 
+#if ENABLE_RAYTRACING
+        [SerializeField]
+        bool m_RayTracedContactShadow = false;
+        /// <summary>
+        /// Controls if we want to ray trace the contact shadow.
+        /// </summary>
+        public bool rayTraceContactShadow
+        {
+            get => m_RayTracedContactShadow;
+            set
+            {
+                if (m_RayTracedContactShadow == value)
+                    return;
+
+                m_RayTracedContactShadow = value;
+            }
+        }
+#endif
+
         [SerializeField]
         Color m_ShadowTint = Color.black;
         /// <summary>

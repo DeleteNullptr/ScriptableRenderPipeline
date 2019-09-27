@@ -76,6 +76,9 @@ namespace UnityEditor.Rendering.HighDefinition
             public SerializedProperty volumetricShadowDimmer;
             public SerializedProperty shadowFadeDistance;
             public SerializedScalableSettingValue contactShadows;
+#if ENABLE_RAYTRACING
+            public SerializedProperty rayTracedContactShadow;
+#endif
             public SerializedProperty shadowTint;
             public SerializedProperty shadowUpdateMode;
             public SerializedScalableSettingValue shadowResolution;
@@ -173,6 +176,7 @@ namespace UnityEditor.Rendering.HighDefinition
                     volumetricShadowDimmer = o.Find("m_VolumetricShadowDimmer"),
                     shadowFadeDistance = o.Find("m_ShadowFadeDistance"),
                     contactShadows = new SerializedScalableSettingValue(o.Find((HDAdditionalLightData l) => l.useContactShadow)),
+                    rayTracedContactShadow = o.Find("m_RayTracedContactShadow"),
                     shadowTint = o.Find("m_ShadowTint"),
                     shadowUpdateMode = o.Find("m_ShadowUpdateMode"),
                     shadowResolution = new SerializedScalableSettingValue(o.Find((HDAdditionalLightData l) => l.shadowResolution)),
