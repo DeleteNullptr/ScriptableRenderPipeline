@@ -163,7 +163,7 @@ namespace UnityEditor.ShaderGraph
 
         public NeededCoordinateSpace RequiresPosition(ShaderStageCapability stageCapability)
         {
-            return CoordinateSpace.AbsoluteWorld.ToNeededCoordinateSpace();
+            return CoordinateSpace.AbsoluteWorld.ToNeededCoordinateSpace() | CoordinateSpace.World.ToNeededCoordinateSpace();
         }
 
         public NeededCoordinateSpace RequiresNormal(ShaderStageCapability stageCapability)
