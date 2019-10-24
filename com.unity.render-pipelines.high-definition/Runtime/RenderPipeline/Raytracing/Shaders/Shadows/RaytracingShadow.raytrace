@@ -510,7 +510,7 @@ bool RayTraceContactShadow(PositionInputs posInput, float3 direction)
         rayIntersection.pixelCoord = posInput.positionSS;
 
         // Evaluate the ray visibility term and PDF
-        TraceRay(_RaytracingAccelerationStructure, RAY_FLAG_CULL_BACK_FACING_TRIANGLES | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, RAYTRACING_CAST_SHADOW_FLAG, 0, 1, 0, rayDescriptor, rayIntersection);
+        TraceRay(_RaytracingAccelerationStructure, RAY_FLAG_CULL_BACK_FACING_TRIANGLES | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, RAYTRACINGRENDERERFLAG_CAST_SHADOW, 0, 1, 0, rayDescriptor, rayIntersection);
         
         // Not sure true translates to 1 in every compiler
         return (rayIntersection.color.x == 0.0) ? 1 : 0;

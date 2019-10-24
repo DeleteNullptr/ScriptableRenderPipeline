@@ -76,9 +76,7 @@ namespace UnityEditor.Rendering.HighDefinition
             public SerializedProperty volumetricShadowDimmer;
             public SerializedProperty shadowFadeDistance;
             public SerializedScalableSettingValue contactShadows;
-#if ENABLE_RAYTRACING
             public SerializedProperty rayTracedContactShadow;
-#endif
             public SerializedProperty shadowTint;
             public SerializedProperty shadowUpdateMode;
             public SerializedScalableSettingValue shadowResolution;

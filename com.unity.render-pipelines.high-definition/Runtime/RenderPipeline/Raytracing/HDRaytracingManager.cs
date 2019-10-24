@@ -216,7 +216,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 if (hdLight.enabled)
                 {
                     // Check if there is a ray traced shadow in the scene
-                    rayTracedShadow |= hdLight.useRayTracedShadows;
+                    rayTracedShadow |= (hdLight.useRayTracedShadows || (hdLight.useContactShadow.@override && hdLight.rayTraceContactShadow));
 
                     if (hdLight.GetComponent<Light>().type == LightType.Directional)
                     {

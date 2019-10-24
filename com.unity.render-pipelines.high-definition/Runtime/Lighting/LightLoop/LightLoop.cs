@@ -3078,10 +3078,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
             parameters.contactShadowsCS = contactShadowComputeShader;
 #if ENABLE_RAYTRACING
+            RayTracingSettings raySettings = VolumeManager.instance.stack.GetComponent<RayTracingSettings>();
             parameters.contactShadowsRTS = m_Asset.renderPipelineRayTracingResources.shadowRaytracingRT;
-            HDRaytracingEnvironment raytracingEnvironment = m_RayTracingManager.CurrentEnvironment();
-            parameters.rayTracingBias = raytracingEnvironment.rayBias;
-            parameters.accelerationStructure = m_RayTracingManager.RequestAccelerationStructure(raytracingEnvironment.shadowLayerMask);
+            parameters.rayTracingBias = raySettings.rayBias.value;
+            parameters.accelerationStructure = RequestAccelerationStructure();
 #endif
             parameters.kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredContactShadowKernelMSAA : s_deferredContactShadowKernel;
 
@@ -3131,7 +3131,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
 #if ENABLE_RAYTRACING
             cmd.SetRayTracingShaderPass(parameters.contactShadowsRTS, "VisibilityDXR");
-            cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, parameters.rayTracingBias);
+            cmd.SetRayTracingFloatParam(parameters.contactShadowsRTS, HDShaderIDs._RaytracingRayBias, parameters.rayTracingBias);
             cmd.SetRayTracingAccelerationStructure(parameters.contactShadowsRTS, HDShaderIDs._RaytracingAccelerationStructureName, parameters.accelerationStructure);
 
             cmd.SetRayTracingVectorParam(parameters.contactShadowsRTS, HDShaderIDs._ContactShadowParamsParameters, parameters.params1);

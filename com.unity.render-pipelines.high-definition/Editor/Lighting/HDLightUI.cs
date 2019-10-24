@@ -828,10 +828,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 HDAdditionalLightData.ScalableSettings.UseContactShadow(hdrp),
                 hdrp.name
             );
-
 #if ENABLE_RAYTRACING
-            // TODO: At the moment, it is not possible to request this information, so we always display the option.
-            //if (serialized.serializedLightData.contactShadows.GetValue())
+            if (serialized.serializedLightData.contactShadows.@override.boolValue)
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(serialized.serializedLightData.rayTracedContactShadow, s_Styles.rayTracedContactShadow);
