@@ -5,9 +5,18 @@ namespace UnityEngine.Rendering.Universal
         const int k_DepthStencilBufferBits = 32;
         const string k_CreateCameraTextures = "Create Camera Texture";
 
+        public static int CutoutMask = LayerMask.GetMask("Characters") | LayerMask.GetMask("Items") | LayerMask.GetMask("Projectiles");
+
         VolumeBlendingPass m_VolumeBlendingPass;
         ColorGradingLutPass m_ColorGradingLutPass;
         DepthOnlyPass m_DepthPrepass;
+
+        // Red Friday
+        CharacterDepthPass m_CharacterDepthPass;
+        DrawCutoutObjectsPass m_RenderCutoutObjectsPass;
+        DrawSeeThroughPass m_RenderCharactersPass;
+        // Red Friday End
+
         MainLightShadowCasterPass m_MainLightShadowCasterPass;
         AdditionalLightsShadowCasterPass m_AdditionalLightsShadowCasterPass;
         ScreenSpaceShadowResolvePass m_ScreenSpaceShadowResolvePass;
@@ -30,6 +39,12 @@ namespace UnityEngine.Rendering.Universal
         RenderTargetHandle m_CameraColorAttachment;
         RenderTargetHandle m_CameraDepthAttachment;
         RenderTargetHandle m_DepthTexture;
+
+        // Red Friday
+        RenderTargetHandle m_CutoutDepthTexture;
+        RenderTargetHandle m_CharacterDepthTexture;
+        // Red Friday End
+
         RenderTargetHandle m_OpaqueColor;
         RenderTargetHandle m_AfterPostProcessColor;
         RenderTargetHandle m_ColorGradingLut;
@@ -58,6 +73,13 @@ namespace UnityEngine.Rendering.Universal
             m_MainLightShadowCasterPass = new MainLightShadowCasterPass(RenderPassEvent.BeforeRenderingShadows);
             m_AdditionalLightsShadowCasterPass = new AdditionalLightsShadowCasterPass(RenderPassEvent.BeforeRenderingShadows);
             m_DepthPrepass = new DepthOnlyPass(RenderPassEvent.BeforeRenderingPrepasses, RenderQueueRange.opaque, data.opaqueLayerMask);
+
+            // Red Friday
+            m_CharacterDepthPass = new CharacterDepthPass(RenderPassEvent.BeforeRenderingPrepasses, RenderQueueRange.opaque);
+            m_RenderCutoutObjectsPass = new DrawCutoutObjectsPass("Render Cutout Objects", true, RenderPassEvent.AfterRenderingOpaques, RenderQueueRange.opaque, ~LayerMask.GetMask("Characters"), m_DefaultStencilState, stencilData.stencilReference, m_CutoutDepthTexture.Identifier());
+            m_RenderCharactersPass = new DrawSeeThroughPass(RenderPassEvent.AfterRenderingOpaques, RenderQueueRange.opaque);
+            // Red Friday End
+
             m_ScreenSpaceShadowResolvePass = new ScreenSpaceShadowResolvePass(RenderPassEvent.BeforeRenderingPrepasses, screenspaceShadowsMaterial);
             m_ColorGradingLutPass = new ColorGradingLutPass(RenderPassEvent.BeforeRenderingOpaques, data.postProcessData);
             m_RenderOpaqueForwardPass = new DrawObjectsPass("Render Opaques", true, RenderPassEvent.BeforeRenderingOpaques, RenderQueueRange.opaque, data.opaqueLayerMask, m_DefaultStencilState, stencilData.stencilReference);
@@ -79,6 +101,12 @@ namespace UnityEngine.Rendering.Universal
             m_CameraColorAttachment.Init("_CameraColorTexture");
             m_CameraDepthAttachment.Init("_CameraDepthAttachment");
             m_DepthTexture.Init("_CameraDepthTexture");
+
+            // Red Friday
+            m_CutoutDepthTexture.Init("_CameraCutoutDepthTexture");
+            m_CharacterDepthTexture.Init("_CharacterDepth");
+            // Red Friday End
+
             m_OpaqueColor.Init("_CameraOpaqueTexture");
             m_AfterPostProcessColor.Init("_AfterPostProcessTexture");
             m_ColorGradingLut.Init("_InternalGradingLut");
@@ -104,13 +132,20 @@ namespace UnityEngine.Rendering.Universal
                 EnqueuePass(m_RenderOpaqueForwardPass);
                 EnqueuePass(m_DrawSkyboxPass);
                 EnqueuePass(m_RenderTransparentForwardPass);
+
+                // Red Friday
+                // EnqueuePass(m_RenderCutoutObjectsPass);
+                m_RenderCharactersPass.Setup(cameraTargetDescriptor, m_CharacterDepthTexture, m_ActiveCameraColorAttachment);
+                EnqueuePass(m_RenderCharactersPass);
+                // Red Friday End
+
                 return;
             }
 
             bool mainLightShadows = m_MainLightShadowCasterPass.Setup(ref renderingData);
             bool additionalLightShadows = m_AdditionalLightsShadowCasterPass.Setup(ref renderingData);
             bool resolveShadowsInScreenSpace = mainLightShadows && renderingData.shadowData.requiresScreenSpaceShadowResolve;
-            
+
             // Depth prepass is generated in the following cases:
             // - We resolve shadows in screen space
             // - Scene view camera always requires a depth texture. We do a depth pre-pass to simplify it and it shouldn't matter much for editor.
@@ -135,18 +170,18 @@ namespace UnityEngine.Rendering.Universal
             m_ActiveCameraColorAttachment = (createColorTexture) ? m_CameraColorAttachment : RenderTargetHandle.CameraTarget;
             m_ActiveCameraDepthAttachment = (createDepthTexture) ? m_CameraDepthAttachment : RenderTargetHandle.CameraTarget;
             bool intermediateRenderTexture = createColorTexture || createDepthTexture;
-            
+
             if (intermediateRenderTexture)
                 CreateCameraRenderTarget(context, ref renderingData.cameraData);
-            
+
             ConfigureCameraTarget(m_ActiveCameraColorAttachment.Identifier(), m_ActiveCameraDepthAttachment.Identifier());
 
             // if rendering to intermediate render texture we don't have to create msaa backbuffer
             int backbufferMsaaSamples = (intermediateRenderTexture) ? 1 : cameraTargetDescriptor.msaaSamples;
-            
+
             if (Camera.main == camera && camera.cameraType == CameraType.Game && camera.targetTexture == null)
                 SetupBackbufferFormat(backbufferMsaaSamples, renderingData.cameraData.isStereoEnabled);
-            
+
             for (int i = 0; i < rendererFeatures.Count; ++i)
             {
                 rendererFeatures[i].AddRenderPasses(this, ref renderingData);
@@ -155,7 +190,7 @@ namespace UnityEngine.Rendering.Universal
             int count = activeRenderPassQueue.Count;
             for (int i = count - 1; i >= 0; i--)
             {
-                if(activeRenderPassQueue[i] == null)
+                if (activeRenderPassQueue[i] == null)
                     activeRenderPassQueue.RemoveAt(i);
             }
             bool hasAfterRendering = activeRenderPassQueue.Find(x => x.renderPassEvent == RenderPassEvent.AfterRendering) != null;
@@ -172,6 +207,11 @@ namespace UnityEngine.Rendering.Universal
                 EnqueuePass(m_DepthPrepass);
             }
 
+            // Red Friday
+            m_CharacterDepthPass.Setup(cameraTargetDescriptor, m_CutoutDepthTexture);
+            EnqueuePass(m_CharacterDepthPass);
+            // Red Friday End
+
             if (resolveShadowsInScreenSpace)
             {
                 m_ScreenSpaceShadowResolvePass.Setup(cameraTargetDescriptor);
@@ -184,7 +224,11 @@ namespace UnityEngine.Rendering.Universal
                 EnqueuePass(m_ColorGradingLutPass);
             }
 
-            EnqueuePass(m_RenderOpaqueForwardPass);
+            //EnqueuePass(m_RenderOpaqueForwardPass);
+
+            // Red Friday
+            EnqueuePass(m_RenderCutoutObjectsPass);
+            // Red Friday End
 
             if (camera.clearFlags == CameraClearFlags.Skybox && RenderSettings.skybox != null)
                 EnqueuePass(m_DrawSkyboxPass);
@@ -212,6 +256,12 @@ namespace UnityEngine.Rendering.Universal
 
             bool requiresFinalPostProcessPass = postProcessEnabled &&
                                      renderingData.cameraData.antialiasing == AntialiasingMode.FastApproximateAntialiasing;
+
+            // Red Friday
+            // EnqueuePass(m_RenderCutoutObjectsPass);
+            m_RenderCharactersPass.Setup(cameraTargetDescriptor, m_CharacterDepthTexture, m_ActiveCameraColorAttachment);
+            EnqueuePass(m_RenderCharactersPass);
+            // Red Friday End
 
             // if we have additional filters
             // we need to stay in a RT
@@ -355,7 +405,7 @@ namespace UnityEngine.Rendering.Universal
             QualitySettings.antiAliasing = msaaSamples;
 #endif
         }
-        
+
         bool RequiresIntermediateColorTexture(ref RenderingData renderingData, RenderTextureDescriptor baseDescriptor)
         {
             ref CameraData cameraData = ref renderingData.cameraData;
