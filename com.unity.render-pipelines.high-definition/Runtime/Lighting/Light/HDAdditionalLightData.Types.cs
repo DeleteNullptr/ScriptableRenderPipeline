@@ -191,25 +191,7 @@ namespace UnityEngine.Rendering.HighDefinition
         /// </summary>
         public HDLightType type
         {
-            get
-            {
-                switch (legacyLight.type)
-                {
-                    case LightType.Rectangle:
-                        // not supported directly. Convert now to equivalent:
-                        legacyLight.type = LightType.Point;
-                        m_PointlightHDType = PointLightHDType.Area;
-                        m_AreaLightShape = AreaLightShape.Rectangle;
-
-                        //sanitycheck on the baking mode first time we add additionalLightData
-#if UNITY_EDITOR
-                        legacyLight.lightmapBakeType = LightmapBakeType.Realtime;
-#endif
-                        return HDLightType.Area;
-                    default:
-                        return ComputeLightType(legacyLight);
-                }
-            }
+            get => ComputeLightType(legacyLight);
             set
             {
                 if (type != value)
@@ -450,8 +432,22 @@ namespace UnityEngine.Rendering.HighDefinition
                     }
                 case LightType.Disc:
                     return HDLightType.Area;
+                case LightType.Rectangle:
+                    // not supported directly. Convert now to equivalent if not default HDAdditionalLightData:
+                    if (this != HDUtils.s_DefaultHDAdditionalLightData)
+                    {
+                        legacyLight.type = LightType.Point;
+                        m_PointlightHDType = PointLightHDType.Area;
+                        m_AreaLightShape = AreaLightShape.Rectangle;
+
+                        //sanitycheck on the baking mode first time we add additionalLightData
+#if UNITY_EDITOR
+                        legacyLight.lightmapBakeType = LightmapBakeType.Realtime;
+#endif
+                    }
+                    return HDLightType.Area;
                 default:
-                    Debug.Assert(false, $"Unknown {typeof(LightType).Name} {legacyLight.type}. Fallback on Point");
+                    Debug.Assert(false, $"Unknown {typeof(LightType).Name} {attachedLight.type}. Fallback on Point");
                     return HDLightType.Point;
             }
         }
