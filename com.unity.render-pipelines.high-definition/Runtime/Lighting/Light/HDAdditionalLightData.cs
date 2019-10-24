@@ -1708,8 +1708,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 shadowRequest.shadowMapType = ShadowMapType.PunctualAtlas;
             }
 
-            shadowRequest.lightType = (int) legacyLight.type; //[TODO: check DXR to remove or not]
-
             // shadow clip planes (used for tessellation clipping)
             GeometryUtility.CalculateFrustumPlanes(viewProjection, m_ShadowFrustumPlanes);
             if (shadowRequest.frustumPlanes?.Length != 6)
