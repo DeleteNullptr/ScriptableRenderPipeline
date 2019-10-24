@@ -106,6 +106,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed Spot light Pyramid Shape has shadow artifacts on aspect ratio values lower than 1
 - Fixed issue with AO upsampling in XR
 - Fixed camera without HDAdditionalCameraData component not rendering
+- Fixed issue causing NaN wheh the Z scale of an object is set to 0.
 
 ### Changed
 - Color buffer pyramid is not allocated anymore if neither refraction nor distortion are enabled
