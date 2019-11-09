@@ -9,7 +9,7 @@ namespace UnityEngine.Rendering.Universal
 	/// You can use this pass to prime a depth buffer for subsequent rendering.
 	/// Use it as a z-prepass, or use it to generate a depth buffer.
 	/// </summary>
-	internal class DrawSeeThroughPass : ScriptableRenderPass
+	internal class DrawForegroundPass : ScriptableRenderPass
 	{
 		int kDepthBufferBits = 32;
 
@@ -24,7 +24,7 @@ namespace UnityEngine.Rendering.Universal
         /// <summary>
         /// Create the DepthOnlyPass
         /// </summary>
-        public DrawSeeThroughPass(RenderPassEvent evt, RenderQueueRange renderQueueRange)
+        public DrawForegroundPass(RenderPassEvent evt, RenderQueueRange renderQueueRange)
 		{
 			m_FilteringSettings = new FilteringSettings(renderQueueRange, ForwardRenderer.CutoutMask);
 

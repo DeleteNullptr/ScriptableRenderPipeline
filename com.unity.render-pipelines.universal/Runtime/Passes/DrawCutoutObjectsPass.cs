@@ -8,7 +8,7 @@ namespace UnityEngine.Rendering.Universal
     /// You can use this pass to render objects that have a material and/or shader
     /// with the pass names UniversalForward or SRPDefaultUnlit.
     /// </summary>
-    internal class DrawCutoutObjectsPass : ScriptableRenderPass
+    internal class DrawBackgroundPass : ScriptableRenderPass
     {
         FilteringSettings m_FilteringSettings;
         RenderStateBlock m_RenderStateBlock;
@@ -20,7 +20,7 @@ namespace UnityEngine.Rendering.Universal
         RenderTargetIdentifier m_CharacterDepth;
         // Red Friday End
 
-        public DrawCutoutObjectsPass(string profilerTag, bool opaque, RenderPassEvent evt, RenderQueueRange renderQueueRange, LayerMask layerMask, StencilState stencilState, int stencilReference, RenderTargetIdentifier characterDepth)
+        public DrawBackgroundPass(string profilerTag, bool opaque, RenderPassEvent evt, RenderQueueRange renderQueueRange, LayerMask layerMask, StencilState stencilState, int stencilReference, RenderTargetIdentifier characterDepth)
         {
             m_ProfilerTag = profilerTag;
             m_ShaderTagIdList.Add(new ShaderTagId("UniversalForward"));

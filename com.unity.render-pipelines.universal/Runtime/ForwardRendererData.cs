@@ -45,6 +45,11 @@ namespace UnityEngine.Rendering.Universal
         
             [Reload("Shaders/Utils/Sampling.shader")]
             public Shader samplingPS;
+
+            // Red Friday
+            [Reload("Shaders/PostProcessing/ExpandDepth.shader")]
+            public Shader expandDepthPS;
+            //Red Friday End
         }
 
         [Reload("Runtime/Data/PostProcessData.asset")]
