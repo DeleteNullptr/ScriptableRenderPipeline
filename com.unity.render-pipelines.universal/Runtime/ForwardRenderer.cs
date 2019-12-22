@@ -14,7 +14,6 @@ namespace UnityEngine.Rendering.Universal
 
         public static int CutoutMask = LayerMask.GetMask("Characters") | LayerMask.GetMask("Items") | LayerMask.GetMask("Projectiles") | LayerMask.GetMask("UI");
 
-        VolumeBlendingPass m_VolumeBlendingPass;
         ColorGradingLutPass m_ColorGradingLutPass;
         DepthOnlyPass m_DepthPrepass;
 
