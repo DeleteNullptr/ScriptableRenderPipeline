@@ -12,7 +12,7 @@ namespace UnityEngine.Rendering.Universal
         DepthOnlyPass m_DepthPrepass;
 
         // Red Friday
-        CharacterDepthPass m_CharacterDepthPass;
+        ForegroundDepthPass m_ForegroundDepthPass;
         ForegroundDepthExpansionPass m_ForegroundDepthExpansionPass;
         DrawBackgroundPass m_RenderBackgroundObjectsPass;
         DrawForegroundPass m_RenderForegroundPass;
@@ -43,7 +43,8 @@ namespace UnityEngine.Rendering.Universal
 
         // Red Friday
         RenderTargetHandle m_CutoutDepthTexture;
-        RenderTargetHandle m_CharacterDepthTexture;
+        RenderTargetHandle m_BlurredCutoutDepthTexture;
+        RenderTargetHandle m_ForeGroundDepthTexture;
         // Red Friday End
 
         RenderTargetHandle m_OpaqueColor;
@@ -76,7 +77,7 @@ namespace UnityEngine.Rendering.Universal
             m_DepthPrepass = new DepthOnlyPass(RenderPassEvent.BeforeRenderingPrepasses, RenderQueueRange.opaque, data.opaqueLayerMask);
 
             // Red Friday
-            m_CharacterDepthPass = new CharacterDepthPass(RenderPassEvent.BeforeRenderingPrepasses, RenderQueueRange.opaque);
+            m_ForegroundDepthPass = new ForegroundDepthPass(RenderPassEvent.BeforeRenderingPrepasses, RenderQueueRange.opaque);
             m_ForegroundDepthExpansionPass = new ForegroundDepthExpansionPass(RenderPassEvent.BeforeRenderingPrepasses, data);
             m_RenderBackgroundObjectsPass = new DrawBackgroundPass("Render Cutout Objects", true, RenderPassEvent.AfterRenderingOpaques, RenderQueueRange.opaque, ~LayerMask.GetMask("Characters"), m_DefaultStencilState, stencilData.stencilReference, m_CutoutDepthTexture.Identifier());
             m_RenderForegroundPass = new DrawForegroundPass(RenderPassEvent.AfterRenderingOpaques, RenderQueueRange.opaque);
@@ -106,7 +107,8 @@ namespace UnityEngine.Rendering.Universal
 
             // Red Friday
             m_CutoutDepthTexture.Init("_CameraCutoutDepthTexture");
-            m_CharacterDepthTexture.Init("_CharacterDepth");
+            m_BlurredCutoutDepthTexture.Init("_BlurredCutoutDepthTexture");
+            m_ForeGroundDepthTexture.Init("_ForegroundDepth");
             // Red Friday End
 
             m_OpaqueColor.Init("_CameraOpaqueTexture");
@@ -137,8 +139,8 @@ namespace UnityEngine.Rendering.Universal
 
                 // Red Friday
                 // EnqueuePass(m_RenderCutoutObjectsPass);
-                m_RenderForegroundPass.Setup(cameraTargetDescriptor, m_CharacterDepthTexture, m_ActiveCameraColorAttachment);
-                EnqueuePass(m_RenderForegroundPass);
+               // m_RenderForegroundPass.Setup(cameraTargetDescriptor, m_CharacterDepthTexture, m_ActiveCameraColorAttachment);
+               // EnqueuePass(m_RenderForegroundPass);
                 // Red Friday End
 
                 return;
@@ -210,11 +212,14 @@ namespace UnityEngine.Rendering.Universal
             }
 
             // Red Friday
-            m_CharacterDepthPass.Setup(cameraTargetDescriptor, m_CutoutDepthTexture);
-            EnqueuePass(m_CharacterDepthPass);
+            if (!(camera.cameraType == CameraType.SceneView && !mainLightShadows && !additionalLightShadows))
+            {
+                m_ForegroundDepthPass.Setup(cameraTargetDescriptor, m_CutoutDepthTexture);
+                EnqueuePass(m_ForegroundDepthPass);
 
-            m_ForegroundDepthExpansionPass.Setup(cameraTargetDescriptor, m_CutoutDepthTexture);
-            EnqueuePass(m_ForegroundDepthExpansionPass);
+                m_ForegroundDepthExpansionPass.Setup(cameraTargetDescriptor, m_CutoutDepthTexture, m_BlurredCutoutDepthTexture);
+                EnqueuePass(m_ForegroundDepthExpansionPass);
+            }
             // Red Friday End
 
             if (resolveShadowsInScreenSpace)
@@ -229,10 +234,10 @@ namespace UnityEngine.Rendering.Universal
                 EnqueuePass(m_ColorGradingLutPass);
             }
 
-            //EnqueuePass(m_RenderOpaqueForwardPass);
+            EnqueuePass(m_RenderOpaqueForwardPass);
 
             // Red Friday
-            EnqueuePass(m_RenderBackgroundObjectsPass);
+           // EnqueuePass(m_RenderBackgroundObjectsPass);
             // Red Friday End
 
             if (camera.clearFlags == CameraClearFlags.Skybox && RenderSettings.skybox != null)
@@ -264,7 +269,7 @@ namespace UnityEngine.Rendering.Universal
 
             // Red Friday
             // EnqueuePass(m_RenderCutoutObjectsPass);
-            m_RenderForegroundPass.Setup(cameraTargetDescriptor, m_CharacterDepthTexture, m_ActiveCameraColorAttachment);
+            m_RenderForegroundPass.Setup(cameraTargetDescriptor, m_ForeGroundDepthTexture, m_ActiveCameraColorAttachment);
             EnqueuePass(m_RenderForegroundPass);
             // Red Friday End
 

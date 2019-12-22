@@ -10,6 +10,7 @@ namespace UnityEngine.Rendering.Universal
     {
         RenderTextureDescriptor m_Descriptor;
         private RenderTargetHandle source { get; set; }
+        private RenderTargetHandle destination { get; set; }
         RenderPassData m_Materials;
         const string m_ProfilerTag = "Expand Foreground Depth";
 
@@ -29,9 +30,10 @@ namespace UnityEngine.Rendering.Universal
         /// </summary>
         /// <param name="source">Source Render Target</param>
         /// <param name="destination">Destination Render Targt</param>
-        public void Setup(in RenderTextureDescriptor baseDescriptor, in RenderTargetHandle source)
+        public void Setup(in RenderTextureDescriptor baseDescriptor, in RenderTargetHandle source, in RenderTargetHandle destination)
         {
             this.source = source;
+            this.destination = destination;
             m_Descriptor = baseDescriptor;
         }
 
@@ -72,21 +74,21 @@ namespace UnityEngine.Rendering.Universal
             cmd.Blit(ShaderConstants._PingTexture, ShaderConstants._PongTexture, m_Materials.m_ExpandDepthMaterial, 1);
 
             // Levels
-            cmd.Blit(ShaderConstants._PongTexture, ShaderConstants._PingTexture, m_Materials.m_ExpandDepthMaterial, 2);
+            cmd.Blit(ShaderConstants._PongTexture, destination.id, m_Materials.m_ExpandDepthMaterial, 2);
 
             // source.id gets bound to the Depth/Stencil slot rather than as RT0
-            //cmd.Blit(ShaderConstants._PongTexture, source.id, m_Materials.m_ExpandDepthMaterial, 2);
+            //cmd.Blit(ShaderConstants._PongTexture, destination.id, m_Materials.m_ExpandDepthMaterial, 3);
 
             // Error: Graphics.CopyTexture called with null source texture
             // cmd.ConvertTexture(ShaderConstants._PingTexture, source.id);
 
             // Both _MainTex and RT0 remain unbound
-            cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
-            cmd.SetViewport(cameraData.camera.pixelRect);
-            cmd.SetGlobalTexture(ShaderConstants._SourceTexture, ShaderConstants._PingTexture);
-            // Force pongtexture as the DS to avoid source.id being used.
-            cmd.SetRenderTarget(source.id, (RenderTargetIdentifier)ShaderConstants._PongTexture);
-            cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, m_Materials.m_ExpandDepthMaterial, 0, 3);
+            //cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            //cmd.SetViewport(cameraData.camera.pixelRect);
+            //cmd.SetGlobalTexture(ShaderConstants._SourceTexture, ShaderConstants._PingTexture);
+            //// Force pongtexture as the DS to avoid source.id being used.
+            //cmd.SetRenderTarget(source.id, (RenderTargetIdentifier)ShaderConstants._PongTexture);
+            //cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, m_Materials.m_ExpandDepthMaterial, 0, 3);
 
             // Cleanup
             cmd.ReleaseTemporaryRT(ShaderConstants._PingTexture);
