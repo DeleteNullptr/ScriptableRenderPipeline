@@ -36,6 +36,130 @@ void AccumulateIndirectLighting(IndirectLighting src, inout AggregateLighting ds
     dst.indirect.specularTransmitted += src.specularTransmitted;
 }
 
+// RED FRIDAY
+
+#define RED_FRIDAY_TOON_SHADING 1
+
+float3 RGB_To_HSV(float3 RGB)
+{
+    float h, s, v, max, min, d;
+
+    max = min = RGB.r;
+    if (RGB.g>max) max = RGB.g; if (RGB.g<min) min = RGB.g;
+    if (RGB.b>max) max = RGB.b; if (RGB.b<min) min = RGB.b;
+    d = max - min;
+    v = max;
+    s = (max>0) ? d / max : 0;
+
+    if (s == 0) h = 0;
+    else {
+        h = 60 * ((RGB.r == max) ? (RGB.g - RGB.b) / d : ((RGB.g == max) ? 2 + (RGB.b - RGB.r) / d : 4 + (RGB.r - RGB.g) / d));
+        if (h<0) h += 360;
+    }
+
+    return float3(h, s, v);
+}
+
+float3 Hue_To_RGB(in float H)
+{
+    float R = abs(H * 6 - 3) - 1;
+    float G = 2 - abs(H * 6 - 2);
+    float B = 2 - abs(H * 6 - 4);
+    return (float3(R, G, B));
+}
+
+float3 HSV_To_RGB(in float3 HSV)
+{
+    while (HSV.x < 0) HSV.x += 360;
+    HSV.x %= 360;
+
+    if (HSV.y == 0) return HSV.zzz;
+    else {
+        HSV.x /= 60;
+        float i;
+        float f = HSV.x - (i = floor(HSV.x));
+        float p = HSV.z * (1 - HSV.y);
+        float q = HSV.z * (1 - HSV.y * f);
+        float t = HSV.z * (1 - HSV.y * (1 - f));
+        switch (i) {
+        case 0: return float3(HSV.z, t, p);
+        case 1: return float3(q, HSV.z, p);
+        case 2: return float3(p, HSV.z, t);
+        case 3: return float3(p, q, HSV.z);
+        case 4: return float3(t, p, HSV.z);
+        case 5: return float3(HSV.z, p, q);
+        default: return float3(1.0f, 0.0f, 1.0f);
+        }
+    }
+}
+
+bool Unity_IsNan_float(float In)
+{
+   return !(In < 0.0 || In > 0.0 || In == 0.0);
+}
+
+float3 ApplyLightRamp(float3 RGB/*, texture2D ramp*/, float increment)
+{
+    if (Unity_IsNan_float(RGB.x)) RGB.x = 0.0f;
+    if (Unity_IsNan_float(RGB.y)) RGB.y = 0.0f;
+    if (Unity_IsNan_float(RGB.z)) RGB.z = 0.0f;
+
+    float3 HSV = RGB_To_HSV(RGB);
+
+    //HSV.z = SAMPLE_TEXTURE2D_LOD(ramp, s_linear_clamp_sampler, float2(HSV.z, 0.5f), 0).x;
+
+    /*int i = 0;
+
+    float nextIncrement = increment;
+
+    while (i == 0 && HSV.z > 0.0f)
+    {
+        increment = nextIncrement;
+        i = HSV.z / increment;
+
+        nextIncrement = increment / 2;
+    }
+
+    if (i > 0)
+    {
+        HSV.z = i * increment;
+    }*/
+
+    if (HSV.z < 0.15)
+    {
+        //HSV.z = 0.1;
+    }
+    else if (HSV.z < 0.5f)
+    {
+        HSV.z = 0.4f;
+    }
+    else if (HSV.z < 0.6f)
+    {
+        HSV.z = 0.4f;
+    }
+    else if (HSV.z < 1.0f)
+    {
+        HSV.z = 0.7f;
+    }
+
+    //HSV.z = min(HSV.z, 1.0f);
+
+    return HSV_To_RGB(HSV);
+}
+
+void ApplyToonShading(inout float3 diffuseLighting, inout float3 specularLighting)
+{
+    diffuseLighting = ApplyLightRamp(diffuseLighting, 0.3f);
+    specularLighting = ApplyLightRamp(specularLighting, 0.5f);
+}
+
+void ApplyToonDirectLighting(inout AggregateLighting aggregateLighting)
+{
+    ApplyToonShading(aggregateLighting.direct.diffuse, aggregateLighting.direct.specular);
+}
+
+// RED FRIDAY END
+
 //-----------------------------------------------------------------------------
 // Ambient occlusion helper
 //-----------------------------------------------------------------------------

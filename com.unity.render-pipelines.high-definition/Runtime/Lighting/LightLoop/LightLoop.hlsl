@@ -409,6 +409,15 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     }
 #endif
 
+    // RED FRIDAY
+
+    // Apply Ramp to accumulated direct lighting.
+#if RED_FRIDAY_TOON_SHADING
+    ApplyToonDirectLighting(aggregateLighting);
+#endif
+
+    // RED FRIDAY END
+
     // Also Apply indiret diffuse (GI)
     // PostEvaluateBSDF will perform any operation wanted by the material and sum everything into diffuseLighting and specularLighting
     PostEvaluateBSDF(   context, V, posInput, preLightData, bsdfData, builtinData, aggregateLighting,
